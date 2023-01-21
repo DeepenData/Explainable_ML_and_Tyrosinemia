@@ -247,7 +247,42 @@ class LoadTrainDataset(LoadDataset):
                 assert ValueError, f'Error model type: {self.model_type}'
         return sample
 
+import torch
+from torch.utils.data import Dataset, DataLoader
+from SAITS_functions import *
 
+class LoadDataset(Dataset):
+    def __init__(self, file_path, seq_len, feature_num, model_type):
+        super(LoadDataset, self).__init__()
+        self.file_path = file_path
+        self.seq_len = seq_len
+        self.feature_num = feature_num
+        self.model_type = model_type
+
+class LoadDataForImputation(LoadDataset):
+    """Load all data for imputation, we don't need do any artificial mask here,
+    just input original data into models and let them impute missing values"""
+
+    def __init__(self, file_path, set_name, seq_len, feature_num, model_type):
+        super(LoadDataForImputation, self).__init__(file_path, seq_len, feature_num, model_type)
+        with h5py.File(self.file_path, 'r') as hf:  # read data from h5 file
+            self.X = hf[set_name]['X'][:]
+        self.missing_mask = (~np.isnan(self.X)).astype(np.float32)
+        self.X = np.nan_to_num(self.X)
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        if self.model_type in ['Transformer', 'SAITS']:
+            sample = (
+                torch.tensor(idx),
+                torch.from_numpy(self.X[idx].astype('float32')),
+                torch.from_numpy(self.missing_mask[idx].astype('float32'))
+            )
+        else:
+            assert ValueError, f'Error model type: {self.model_type}'
+        return sample
 class UnifiedDataLoader:
     def __init__(self, dataset_path, seq_len, feature_num, model_type, batch_size, num_workers=4,
                  masked_imputation_task=False):
@@ -289,6 +324,24 @@ class UnifiedDataLoader:
         self.train_loader = DataLoader(self.train_dataset, self.batch_size,  num_workers=self.num_workers, sampler=train_sampler, drop_last=True)
         self.val_loader   = DataLoader(self.val_dataset, self.batch_size, num_workers=self.num_workers, sampler=val_sampler, drop_last=True)
         return self.train_loader, self.val_loader
+    
+    def prepare_dataloader_for_imputation(self, set_name):
+        data_for_imputation = LoadDataForImputation(self.dataset_path, set_name, self.seq_len, self.feature_num,
+                                                    self.model_type)
+        
+        
+        sampler = torch.utils.data.RandomSampler(data_for_imputation , replacement=True, num_samples=33)
+        
+        
+        dataloader_for_imputation = DataLoader(data_for_imputation, 
+                                               self.batch_size, shuffle=False, drop_last=True, sampler=sampler)
+        return dataloader_for_imputation
+    
+    def prepare_all_data_for_imputation(self):
+        train_set_for_imputation = self.prepare_dataloader_for_imputation('train')
+        val_set_for_imputation = self.prepare_dataloader_for_imputation('val')
+        test_set_for_imputation = self.prepare_dataloader_for_imputation('test')
+        return train_set_for_imputation, val_set_for_imputation, test_set_for_imputation
     
 from SAITS_functions import * 
 import argparse
