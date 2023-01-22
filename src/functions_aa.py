@@ -251,13 +251,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from SAITS_functions import *
 
-class LoadDataset(Dataset):
-    def __init__(self, file_path, seq_len, feature_num, model_type):
-        super(LoadDataset, self).__init__()
-        self.file_path = file_path
-        self.seq_len = seq_len
-        self.feature_num = feature_num
-        self.model_type = model_type
 
 class LoadDataForImputation(LoadDataset):
     """Load all data for imputation, we don't need do any artificial mask here,
