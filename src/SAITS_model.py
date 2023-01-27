@@ -219,7 +219,7 @@ class SAITS(nn.Module):
             attn_weights = attn_weights.mean(dim=3)
             attn_weights = torch.transpose(attn_weights, 1, 2)
 
-        combining_weights = F.sigmoid(self.weight_combine(torch.cat([masks, attn_weights], dim=2)))  # namely term eta
+        combining_weights = torch.sigmoid(self.weight_combine(torch.cat([masks, attn_weights], dim=2)))  # namely term eta
         # combine X_tilde_1 and X_tilde_2
         X_tilde_3 = (1 - combining_weights) * X_tilde_2 + combining_weights * X_tilde_1
         X_c = masks * X + (1 - masks) * X_tilde_3  # replace non-missing part with original data
