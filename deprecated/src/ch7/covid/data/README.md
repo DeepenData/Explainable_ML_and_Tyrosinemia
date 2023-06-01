@@ -1,1 +1,0 @@
-https://data.world/dataman-udit/covid-19-time-series-data/workspace/file?filename=COVID-19+Time+Series+Data.csv
