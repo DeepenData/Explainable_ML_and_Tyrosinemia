@@ -135,19 +135,41 @@ class TwoObjectiveSolutions:
         auc = [trial.values[0] for trial in trials]
         s = [trial.values[1] for trial in trials]
         return pd.DataFrame({"Trial": trial_numbers, "AUC": auc, "S": s})
-
-
+    
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 def plot_all_studies(studies, auc_cutoff, s_cutoff):
+    # Calculate average "S" for Pareto optimal trials with AUC > auc_cutoff in each study
+    study_avg_S = []
+    for study in studies:
+        solutions = TwoObjectiveSolutions(study, auc_cutoff, s_cutoff)
+        solutions.generate_dataframes()
+        pareto_trials = solutions.df[(solutions.df['pareto'] == True) & (solutions.df['AUC'] > auc_cutoff)]
+        avg_S = pareto_trials['S'].mean() if not pareto_trials.empty else 0
+        study_avg_S.append((study, avg_S))
+    
+    # Sort studies based on average "S"
+    study_avg_S.sort(key=lambda x: x[1], reverse=True)
+
     num_studies = len(studies)
     num_cols = num_studies if num_studies <= 3 else num_studies // 3 + (num_studies % 3 > 0)
     
-    fig = make_subplots(rows=3, cols=num_cols, subplot_titles=[study.study_name for study in studies])
+    fig = make_subplots(rows=3, cols=num_cols, subplot_titles=[study[0].study_name for study in study_avg_S])
     
-    for i, study in enumerate(studies):
+    max_y = -float('inf')
+    min_x = float('inf')
+    max_x = -float('inf')
+
+    # Iterate over each study
+    for i, (study, _) in enumerate(study_avg_S):
         solutions = TwoObjectiveSolutions(study, auc_cutoff, s_cutoff)
         solutions.generate_dataframes()
+
+        # update the max_y, min_x and max_x for the y-axes and x-axes range 
+        max_y = max(max_y, solutions.df["S"].max())
+        min_x = min(min_x, solutions.df["AUC"].min())
+        max_x = 1.01*max(max_x, solutions.df["AUC"].max())
 
         # Pareto optimal trials
         pareto_df = solutions.df[solutions.df['pareto'] == True]
@@ -157,14 +179,21 @@ def plot_all_studies(studies, auc_cutoff, s_cutoff):
         other_trials_df = solutions.df[solutions.df['pareto'] == False]
         fig.add_trace(go.Scatter(x=other_trials_df["AUC"], y=other_trials_df["S"], mode='markers', name='Other Trials', legendgroup="group2", marker=dict(color='red', opacity=0.5), showlegend=(i == 0)), row=(i%3)+1, col=(i//3)+1)
 
-        if solutions.auc_cutoff is not None and solutions.s_cutoff is not None:
-            fig.add_shape(type="rect",
-                          x0=solutions.auc_cutoff, y0=solutions.s_cutoff,
-                          x1=max(solutions.df["AUC"]), y1=max(solutions.df["S"]),
-                          line=dict(color="LightSeaGreen", width=2),
-                          fillcolor="LightSeaGreen", opacity=0.3,
-                          row=(i%3)+1, col=(i//3)+1)
+        # Add rectangle. Note that y1 = 1.1*max_y to ensure the rectangle reaches the end of y-axis in all subplots.
+        fig.add_shape(type="rect",
+              x0=solutions.auc_cutoff, y0=-0.02,  # y0 = minimum of y-axis range
+              x1=1.0, y1=1.1*max_y,  # x1 = 1.0 (end of normalized x-axis), y1 = maximum of y-axis range
+              line=dict(color="LightSeaGreen", width=2),
+              fillcolor="LightSeaGreen", opacity=0.3,
+              row=(i%3)+1, col=(i//3)+1)
+
+
+    # Update y-axis range for all subplots
+    fig.update_yaxes(range=[-0.02, 1.1*max_y])
     
+    # Update x-axis range for all subplots
+    fig.update_xaxes(range=[min_x, max_x])
+
     # Update layout to remove margins and show legend
     fig.update_layout(
         autosize=True,
@@ -182,6 +211,79 @@ def plot_all_studies(studies, auc_cutoff, s_cutoff):
 
     fig.show()
 
+    
+# from plotly.subplots import make_subplots
+# import plotly.graph_objects as go
+
+# def plot_all_studies(studies, auc_cutoff, s_cutoff):
+#     # First calculate the average "S" for the Pareto trials with AUC > auc_cutoff in each study
+#     study_avg_S = []
+#     for study in studies:
+#         solutions = TwoObjectiveSolutions(study, auc_cutoff, s_cutoff)
+#         solutions.generate_dataframes()
+#         pareto_trials = solutions.df[(solutions.df['pareto'] == True) & (solutions.df['AUC'] > auc_cutoff)]
+#         avg_S = pareto_trials['S'].mean() if not pareto_trials.empty else 0
+#         study_avg_S.append((study, avg_S))
+    
+#     # Sort studies based on average "S"
+#     study_avg_S.sort(key=lambda x: x[1], reverse=True)
+
+#     num_studies = len(studies)
+#     num_cols = num_studies if num_studies <= 3 else num_studies // 3 + (num_studies % 3 > 0)
+    
+#     fig = make_subplots(rows=3, cols=num_cols, subplot_titles=[study[0].study_name for study in study_avg_S])
+    
+#     max_y = -float('inf')
+#     min_x = float('inf')
+#     max_x = -float('inf')
+
+#     for i, (study, _) in enumerate(study_avg_S):
+#         solutions = TwoObjectiveSolutions(study, auc_cutoff, s_cutoff)
+#         solutions.generate_dataframes()
+
+#         # update the max_y, min_x and max_x for the y-axes and x-axes range 
+#         max_y = max(max_y, solutions.df["S"].max())
+#         min_x = min(min_x, solutions.df["AUC"].min())
+#         max_x = 1.01*max(max_x, solutions.df["AUC"].max())
+
+#         # Pareto optimal trials
+#         pareto_df = solutions.df[solutions.df['pareto'] == True]
+#         fig.add_trace(go.Scatter(x=pareto_df["AUC"], y=pareto_df["S"], mode='markers', marker_symbol='square', name='Pareto Optimal Trials', legendgroup="group1", marker=dict(color='blue', opacity=0.5), showlegend=(i == 0)), row=(i%3)+1, col=(i//3)+1)
+
+#         # Other trials
+#         other_trials_df = solutions.df[solutions.df['pareto'] == False]
+#         fig.add_trace(go.Scatter(x=other_trials_df["AUC"], y=other_trials_df["S"], mode='markers', name='Other Trials', legendgroup="group2", marker=dict(color='red', opacity=0.5), showlegend=(i == 0)), row=(i%3)+1, col=(i//3)+1)
+
+#         if solutions.auc_cutoff is not None and solutions.s_cutoff is not None:
+#             fig.add_shape(type="rect",
+#               x0=solutions.auc_cutoff, y0=-0.02,  # y0 = minimum of y-axis range
+#               x1=1.0, y1=1.1*max_y,  # x1 = 1.0 (end of normalized x-axis), y1 = maximum of y-axis range
+#               line=dict(color="LightSeaGreen", width=2),
+#               fillcolor="LightSeaGreen", opacity=0.3,
+#               row=(i%3)+1, col=(i//3)+1)
+
+#     # Update y-axis range for all subplots
+#     fig.update_yaxes(range=[-0.02, 1.1*max_y])
+    
+#     # Update x-axis range for all subplots
+#     fig.update_xaxes(range=[min_x, max_x])
+
+#     # Update layout to remove margins and show legend
+#     fig.update_layout(
+#         autosize=True,
+#         margin=dict(l=0, r=0, t=30, b=0), # increased top margin
+#         showlegend=True
+#     )
+    
+#     # Update annotations (subplot titles) to decrease font size
+#     fig.update_annotations(dict(
+#             xref="paper",
+#             yref="paper",
+#             showarrow=False,
+#             font=dict(size=10),  # decrease font size to 10
+#     ))
+
+#     fig.show()
 
 def compare_dataframes(df1, df2):
     # Read CSV files into pandas DataFrames
@@ -380,88 +482,13 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import StandardScaler
 
-CPUS_PER_JOB : int = 8
+CPUS_PER_JOB : int = 5
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
-
-
-
-# class DataImputer:
-#     """
-#     A class to impute missing numerical values in a pandas DataFrame.
-
-#     Attributes
-#     ----------
-#     df : pandas.DataFrame
-#         The input dataframe with data.
-#     random_state : int
-#         The seed used by the random number generator for the imputer.
-#     max_iter : int
-#         The maximum number of imputing iterations to perform.
-#     scaler : sklearn.StandardScaler
-#         The standard scaler object.
-#     imputer : sklearn.IterativeImputer
-#         The iterative imputer object.
-
-#     Methods
-#     -------
-#     fit_transform():
-#         Fits the imputer on data and returns the imputed DataFrame.
-#     insert_random_nans(probability: float = 0.2):
-#         Inserts random NaNs to numerical columns in the dataframe.
-#     """
-
-#     def __init__(self, df, random_state=None, max_iter=10):
-#         """
-#         Constructs all the necessary attributes for the DataImputer object.
-
-#         Parameters
-#         ----------
-#         df : pandas.DataFrame
-#             The input dataframe with data.
-#         random_state : int, optional
-#             The seed used by the random number generator for the imputer (default is 100).
-#         max_iter : int, optional
-#             The maximum number of imputing iterations to perform (default is 10).
-#         """
-#         self.df = df
-#         self.random_state = random_state
-#         self.max_iter = max_iter
-#         self.scaler = StandardScaler()
-#         self.imputer = IterativeImputer(random_state=self.random_state, max_iter=self.max_iter)
-
-#     def fit_transform(self):
-#         """
-#         Fits the imputer on data and performs imputations, and then inverse transform to retain the original scale.
-
-#         Returns
-#         -------
-#         DataImputer
-#             The instance of the DataImputer.
-#         """
-#         numerical_cols = self.df.select_dtypes(include=np.number).columns
-#         numerical_df = self.df[numerical_cols]
-
-#         # Scale numerical data
-#         scaled_df = pd.DataFrame(self.scaler.fit_transform(numerical_df.values), columns=numerical_df.columns)
-
-#         # Fit imputer and perform imputations on the scaled numerical dataset
-#         df_imputed = pd.DataFrame(self.imputer.fit_transform(scaled_df), columns=scaled_df.columns)
-
-#         # Inverse transform to retain the original scale
-#         original_scale_df = pd.DataFrame(self.scaler.inverse_transform(df_imputed), columns=df_imputed.columns)
-
-#         # Combine imputed numerical data with the categorical data
-#         categorical_cols = self.df.select_dtypes(exclude=np.number).columns
-#         df_imputed_with_categorical = pd.concat([original_scale_df, self.df[categorical_cols]], axis=1)
-
-#         self.df = df_imputed_with_categorical
-
-#         return self
 import warnings
 import numpy as np
 import pandas as pd
@@ -495,7 +522,7 @@ class DataImputer:
         Inserts random NaNs to numerical columns in the dataframe.
     """
 
-    def __init__(self, df, random_state=None, max_iter=10):
+    def __init__(self, df, random_state=None, max_iter=100):
         """
         Constructs all the necessary attributes for the DataImputer object.
 
@@ -512,7 +539,8 @@ class DataImputer:
         self.random_state = random_state
         self.max_iter = max_iter
         self.scaler = StandardScaler()
-        self.imputer = IterativeImputer(random_state=self.random_state, max_iter=self.max_iter)
+        self.imputer = IterativeImputer(
+            random_state=self.random_state, max_iter=self.max_iter, sample_posterior = True, initial_strategy = 'median')
 
     def fit_transform(self):
         """
@@ -747,7 +775,9 @@ class ModelInstance:
         self.verbose = verbose
 
         
-        df        = DataImputer(df).fit_transform().df
+        df        = DataImputer(df, random_state = seed).fit_transform().df
+        
+        
         if not self.Independent_testset:
             
             self.X_train, self.X_test, self.y_train, self.y_test = DataSplitter(
@@ -912,7 +942,7 @@ def make_a_study(
             Independent_testset_df = Independent_testset_df
         ),
         n_trials=n_trials,
-        n_jobs=CPUS_PER_JOB, # TODO: posiblemente pueda detectarlo ?
+        n_jobs=-1, # TODO: posiblemente pueda detectarlo ?
         catch=(
             TypeError,
             ValueError,
@@ -931,6 +961,6 @@ def make_multiple_studies(
     ) -> list[optuna.Study | ray.ObjectRef ]:
     """Es un wrapper conveniente para multiples optimizadores"""
 
-    return [make_a_study.remote(f"{f}_predicts_{t}", data, t, f, n_trials=n_trials, 
+    return [make_a_study.remote(f"{f}", data, t, f, n_trials=n_trials, 
                                 Independent_testset = Independent_testset,
                                 Independent_testset_df = Independent_testset_df) for f in features for t in targets if f != t]
