@@ -192,7 +192,7 @@ def plot_all_studies(studies, auc_cutoff, s_cutoff):
     fig.update_yaxes(range=[-0.02, 1.1*max_y])
     
     # Update x-axis range for all subplots
-    fig.update_xaxes(range=[min_x, max_x])
+    fig.update_xaxes(range=[min_x, max_x], tickvals=[0.5,0.8, 1.0])
 
     # Update layout to remove margins and show legend
     fig.update_layout(
@@ -786,6 +786,8 @@ class ModelInstance:
             
         else:
             #Use an independent testset
+            Independent_testset_df  = DataImputer(Independent_testset_df, random_state = seed).fit_transform().df           
+            
             self.X_train, _, self.y_train, _ = DataSplitter(
                 test_size=test_size, random_state=seed
             ).split_data(df=df, label_col=target)

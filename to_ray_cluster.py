@@ -43,8 +43,8 @@ if __name__ == '__main__':
         )
 
     binary_target = 'Alpha-Fet'
-    df_train = extract_transform("tirosinemia.csv", OPBG,  ['alfa-fetoprotein', 'sca (urine)', 'ntbc levels (dbs)'],binary_target)
-    df_test  = extract_transform("tirosinemia_italia.csv", OPBG,  ['alfa-fetoprotein', 'sca (urine)', 'ntbc levels (dbs)'],binary_target)
+    df_train = extract_transform("data/tirosinemia.csv", OPBG,  ['alfa-fetoprotein', 'sca (urine)', 'ntbc levels (dbs)'],binary_target)
+    df_test  = extract_transform("data/tirosinemia_italia.csv", OPBG,  ['alfa-fetoprotein', 'sca (urine)', 'ntbc levels (dbs)'],binary_target)
     ray_df_train = ray.put(df_train)
     ray_df_test  = ray.put(df_test)
     features : list[str] = df_train.columns.tolist()
@@ -63,12 +63,16 @@ if __name__ == '__main__':
     ray.shutdown()
     import pickle
 
-    with open('1a_hello_aws.pickle', 'wb') as handle:
+    with open('jun_2_23.pickle', 'wb') as handle:
         pickle.dump(studies, handle, protocol=pickle.HIGHEST_PROTOCOL)    
         
     end_time = time.time()  # Record the end time
     elapsed_time = end_time - start_time  # Calculate the elapsed time
-    print("Total time taken: {:.2f} seconds".format(elapsed_time))
+    #print("Total time taken: {:.2f} seconds".format(elapsed_time))
+    hours, rem = divmod(elapsed_time, 3600)
+    minutes, seconds = divmod(rem, 60)
+
+    print("Total time taken: {:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
 
 
     
