@@ -836,7 +836,7 @@ def objective(
     """
 
     if finetunning:
-        seed = random.randint(1, 10_000)
+        seed = trial.suggest_int("seed", 1, 10_000) #random.randint(1, 10_000)
 
         # TOOD: definir fuera? 
         params = {
@@ -852,6 +852,7 @@ def objective(
             "lambda": trial.suggest_float("lambda", 0, 1),
             "alpha": trial.suggest_float("alpha", 0, 1),
             "scale_pos_weight": trial.suggest_float("scale_pos_weight", 0, 5),
+            "seed": seed,
         }
 
         if data[target].dtype != 'category': 
@@ -867,7 +868,7 @@ def objective(
         test_size=0.3,
         xgb_params=params,
         kfold_splits=trial.suggest_int("kfold_splits", 2, 5),
-        seed=seed, 
+        seed=seed,#trial.suggest_int("seed", 1, 10_000), 
         Independent_testset= Independent_testset,
         Independent_testset_df = Independent_testset_df,
         
