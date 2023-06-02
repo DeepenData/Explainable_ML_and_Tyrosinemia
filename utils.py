@@ -522,7 +522,7 @@ class DataImputer:
         Inserts random NaNs to numerical columns in the dataframe.
     """
 
-    def __init__(self, df, random_state=None, max_iter=100):
+    def __init__(self, df, random_state=None, max_iter=50):
         """
         Constructs all the necessary attributes for the DataImputer object.
 
@@ -540,7 +540,7 @@ class DataImputer:
         self.max_iter = max_iter
         self.scaler = StandardScaler()
         self.imputer = IterativeImputer(
-            random_state=self.random_state, max_iter=self.max_iter, sample_posterior = True, initial_strategy = 'median')
+            random_state=self.random_state, max_iter=self.max_iter, initial_strategy = 'median')
 
     def fit_transform(self):
         """

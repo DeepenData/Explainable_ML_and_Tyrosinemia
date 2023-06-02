@@ -1,0 +1,124 @@
+# An unique identifier for the head node and workers of this cluster.
+cluster_name: explainable-ml-and-tyrosinemia
+
+# The maximum number of workers nodes to launch in addition to the head
+# node.
+max_workers: 10
+upscaling_speed: 1.0
+idle_timeout_minutes: 5
+
+# Cloud-provider specific configuration.
+provider:
+  type: aws
+  region: us-west-2
+  availability_zone: us-west-2a,us-west-2b
+
+  cache_stopped_nodes: True # default is True.
+
+# How Ray will authenticate with newly launched nodes.
+auth:
+  ssh_user: ubuntu
+  ssh_private_key: /DeepenData/Infraestructura/keys/aws-ray-cluster
+
+# Definiciones de nodos
+available_node_types:
+  ray.head.default:
+    resources: {} # Dejar vacio para auto-detect
+    # Provider-specific config for this node type, e.g. instance type. By default
+    # Ray will auto-configure unspecified fields such as SubnetId and KeyName.
+    # For more documentation on available fields, see:
+    # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
+    node_config:
+      KeyName: "aws-ray-cluster"
+      InstanceType: c6a.2xlarge
+      # INFO: La instancia es del mismo tipo que para workers
+      # Otras instancias son g4dn.xlarge a 4xlarge. Pero valeno dolares por hora.
+
+      ImageId: ami-002c40f3df9b2ea7d
+      # Default AMI for us-west-2. ami-0387d929287ab193e
+      # TODO: Esta es la AMI de DeepLearning con todo incluido. Solo queremos Pytorch.
+
+      # TODO: custom AMI o usar una mas simple. En este caso, Ubuntu 20.04 x PyTorch 2.0
+      # aws ec2 describe-images --region us-east-1 --owners amazon --filters 'Name=name,Values=Deep Learning AMI GPU PyTorch 2.0.? (Ubuntu 20.04) ????????' 'Name=state,Values=available' --query 'reverse(sort_by(Images, &CreationDate))[:1].ImageId' --output text
+
+      # You can provision additional disk space with a conf as follows
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 100
+            VolumeType: gp3
+
+  ray.worker.default:
+    min_workers: 4
+    max_workers: 10
+    resources: {}
+    node_config:
+      KeyName: "aws-ray-cluster"
+      InstanceType: c6a.2xlarge
+      ImageId: ami-002c40f3df9b2ea7d
+      InstanceMarketOptions:
+        MarketType: spot
+
+# Specify the node type of the head node (as configured above).
+head_node_type: ray.head.default
+
+file_mounts:
+  {
+    #"~/env/conda_environment.yml": "./conda_environment.yml",
+    #"~/env/pip_requirements.txt": "./pip_requirements.txt",
+  }
+
+# Files or directories to copy from the head node to the worker nodes. The format is a
+# list of paths. The same path on the head node will be copied to the worker node.
+# This behavior is a subset of the file_mounts behavior. In the vast majority of cases
+# you should just use file_mounts. Only use this if you know what you're doing!
+cluster_synced_files: []
+
+# Whether changes to directories in file_mounts or cluster_synced_files in the head node
+# should sync to the worker node continuously
+file_mounts_sync_continuously: False
+
+# Patterns for files to exclude when running rsync up or rsync down
+rsync_exclude:
+  - "**/.git"
+  - "**/.git/**"
+
+# Pattern files to use for filtering out files when running rsync up or rsync down. The file is searched for
+# in the source directory and recursively through all subdirectories. For example, if .gitignore is provided
+# as a value, the behavior will match git's behavior for finding and using .gitignore files.
+rsync_filter:
+  - ".gitignore"
+
+# List of commands that will be run before `setup_commands`. If docker is
+# enabled, these commands will run outside the container and before docker
+# is setup.
+# TODO: aqui puedo inclur comandos para conectar esto como un github runner
+
+initialization_commands: []
+
+# List of shell commands to run to set up nodes.
+setup_commands:
+  - test -f "Mambaforge-$(uname)-$(uname -m).sh" || curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
+  - test -d ~/mambaforge || bash Mambaforge-$(uname)-$(uname -m).sh -b
+  - test ! -z $CONDA_DEFAULT_ENV || ~/mambaforge/bin/mamba init
+  - source .bashrc
+  - mamba install -C -S botocore boto3 --yes # 
+  - mamba install -c anaconda networkx pandas --yes
+
+# - mamba env update --name base --file ~/env/conda_environment.yml # Crea un nuevo entorno con la listea de dependencias
+
+head_setup_commands: []
+worker_setup_commands: []
+
+# ----------------------------------------------------------------
+# Command to start ray on nodes. You don't need to change this.
+head_start_ray_commands:
+  - ray stop
+  - ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml --dashboard-host=0.0.0.0
+
+worker_start_ray_commands:
+  - ray stop
+  - ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
+# LANZANDO TRABAJOS
+# ray attach cluster.yml
+# ray job submit --runtime-env-json='{"conda":"TRY-networkx"}' --no-wait -- python trivial.py
