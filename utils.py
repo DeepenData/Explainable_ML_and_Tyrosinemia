@@ -139,7 +139,7 @@ class TwoObjectiveSolutions:
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
-def plot_all_studies(studies, auc_cutoff, s_cutoff):
+def plot_all_studies(studies, auc_cutoff, s_cutoff, main_title=""):
     # Calculate average "S" for Pareto optimal trials with AUC > auc_cutoff in each study
     study_avg_S = []
     for study in studies:
@@ -194,11 +194,17 @@ def plot_all_studies(studies, auc_cutoff, s_cutoff):
     # Update x-axis range for all subplots
     fig.update_xaxes(range=[min_x, max_x], tickvals=[0.5,0.8, 1.0])
 
-    # Update layout to remove margins and show legend
+    # Update layout to remove margins, show legend, and set main title
     fig.update_layout(
         autosize=True,
-        margin=dict(l=0, r=0, t=30, b=0), # increased top margin
-        showlegend=True
+        margin=dict(l=0, r=0, t=50, b=0),  # increased top margin
+        showlegend=True,
+        title={
+            'text': main_title,
+            'y':.96,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'}
     )
     
     # Update annotations (subplot titles) to decrease font size
@@ -792,12 +798,15 @@ class ModelInstance:
                 test_size=.1, random_state=seed
             ).split_data(df=df, label_col=target)
             
-            self.X_test0, self.X_test1,  self.y_test0, self.y_test1  = DataSplitter(
-                test_size=0.5, random_state=seed
-            ).split_data(df=Independent_testset_df, label_col=target)
+            # self.X_test0, self.X_test1,  self.y_test0, self.y_test1  = DataSplitter(
+            #     test_size=0.5, random_state=seed
+            # ).split_data(df=Independent_testset_df, label_col=target)
             
-            self.X_test = pd.concat([self.X_test0, self.X_test1], ignore_index=True).reset_index(drop=True)
-            self.y_test = pd.concat([self.y_test0, self.y_test1], ignore_index=True).reset_index(drop=True)
+            # self.X_test = pd.concat([self.X_test0, self.X_test1], ignore_index=True).reset_index(drop=True)
+            # self.y_test = pd.concat([self.y_test0, self.y_test1], ignore_index=True).reset_index(drop=True)
+            
+            self.y_test = Independent_testset_df[target]
+            self.X_test = Independent_testset_df.drop(target, axis=1, inplace=False)
             
             
             
@@ -969,6 +978,6 @@ def make_multiple_studies(
     ) -> list[optuna.Study | ray.ObjectRef ]:
     """Es un wrapper conveniente para multiples optimizadores"""
 
-    return [make_a_study.remote(f"{f}", data, t, f, n_trials=n_trials, 
+    return [make_a_study.remote(f"{f} ({t})", data, t, f, n_trials=n_trials, 
                                 Independent_testset = Independent_testset,
                                 Independent_testset_df = Independent_testset_df) for f in features for t in targets if f != t]
