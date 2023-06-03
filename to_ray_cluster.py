@@ -12,20 +12,16 @@ if __name__ == '__main__':
                 'ntbc dosis mg/kg/day',
                 'ntbc levels (dbs)',
                 'sca (urine)',
-                'methionine dbs',
-                'tyrosine dbs',
-                'phenylalanine dbs',
                 'methionine (plasma)',
                 'tyrosine (plasma)',
                 'phenylalanine (plasma)',
-                'inr',
                 'pt (sec)',
                 'bili total',
                 'gpt',
                 'got',
                 'ggt',
                 'alkaline phosphatase',
-                'alfa-fetoprotein']
+                'alfa-fetoprotein','glicemia']
         
     df1 = pd.read_csv('data/tirosinemia.csv').loc[:,OPBG]
     df2 = pd.read_csv('data/tirosinemia_italia.csv').loc[:,OPBG]

@@ -334,9 +334,9 @@ def prepare_spark_df(
     )
 
 
-    spark_df = spark_df.drop(
-        *['tiempo', 'código', 'pacientes', 'dosis ntbc', 'iq']
-    )
+    # spark_df = spark_df.drop(
+    #     *['tiempo', 'código', 'pacientes', 'dosis ntbc', 'iq']
+    # )
 
     
     
@@ -347,7 +347,7 @@ def prepare_spark_df(
                                                 ).binarize_column(column_names=original_continuos_target, cut_off=5, 
                                                                   new_column_names=[new_binary_target], drop_original=True)
 
-    return encode_and_convert(spark_df2.data_frame.toPandas())
+    return encode_and_convert(spark_df2.data_frame.toPandas()), spark_df2.data_frame.toPandas()
 
 
 def drop_columns_containing_word(df, word, exception=None):
@@ -789,12 +789,18 @@ class ModelInstance:
             Independent_testset_df  = DataImputer(Independent_testset_df, random_state = seed).fit_transform().df           
             
             self.X_train, _, self.y_train, _ = DataSplitter(
-                test_size=test_size, random_state=seed
+                test_size=.1, random_state=seed
             ).split_data(df=df, label_col=target)
             
-            self.X_test, _,  self.y_test, _  = DataSplitter(
-                test_size=0.05, random_state=seed
+            self.X_test0, self.X_test1,  self.y_test0, self.y_test1  = DataSplitter(
+                test_size=0.5, random_state=seed
             ).split_data(df=Independent_testset_df, label_col=target)
+            
+            self.X_test = pd.concat([self.X_test0, self.X_test1], ignore_index=True).reset_index(drop=True)
+            self.y_test = pd.concat([self.y_test0, self.y_test1], ignore_index=True).reset_index(drop=True)
+            
+            
+            
             
 
         cv = StratifiedKFold(n_splits=kfold_splits, shuffle=True, random_state=seed)
