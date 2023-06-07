@@ -2,4 +2,4 @@ tmp/
 **/*.png
 **/*.svg
 **/*.pdf   
-
+__pycache__/
