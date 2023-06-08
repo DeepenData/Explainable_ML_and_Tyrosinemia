@@ -805,7 +805,7 @@ class ModelInstance:
             # self.X_test = pd.concat([self.X_test0, self.X_test1], ignore_index=True).reset_index(drop=True)
             # self.y_test = pd.concat([self.y_test0, self.y_test1], ignore_index=True).reset_index(drop=True)
             
-            self.y_test = Independent_testset_df[target]
+            self.y_test = Independent_testset_df[target]#.astype('category')#.iloc[:, 0].astype('category')
             self.X_test = Independent_testset_df.drop(target, axis=1, inplace=False)
             
             
