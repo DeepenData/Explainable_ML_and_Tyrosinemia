@@ -139,6 +139,51 @@ df2.to_csv('data/tirosinemia_italia_1vpFD-SLCcub.csv')
 
 # %%
 # PARTE DE PARSEAR DICHOS SHEETS A PARQUET DE ALEJANDRO
+# pierde el punto en que originalmente esto estaba pensado en HPC
+
+#fmt: off
+OPBG : list[str] = [
+    # 'código',
+    'age at diagnosis (months)',            
+    'ntbc dosis mg/kg/day',
+    'ntbc levels (dbs)',
+    "suac", #'sca (urine)',
+    'methionine (plasma)',
+    'tyrosine (plasma)',
+    'phenylalanine (plasma)',
+    'pt (sec)',
+    'bili total',
+    'gpt',
+    'got',
+    'ggt',
+    'alkaline phosphatase',
+    'alfa-fetoprotein',
+    'glicemia'
+]
+logging.info(f"Used features: {OPBG}")
+
+REQUIERE_COMPLETE : list[str] = [
+    'suac',
+    'alfa-fetoprotein',
+]
+logging.info(f"Requiered features: {REQUIERE_COMPLETE}")
+
+# Common filtering of the cohorts, so they pass the same names
+def cohort_filter(df : pd.DataFrame) -> pd.DataFrame: 
+    """Drops the rows (samples) that have NaNs in any of the REQUIERE_COMPLETE features"""
+    return df[ OPBG ].dropna(axis='rows', subset=REQUIERE_COMPLETE)
+
+# %% 
+# FILTRADO EN SI
+
+chile_cohort = cohort_filter(df1)
+rome_cohort  = cohort_filter(df2).loc[ df2.index.get_level_values('código').str.startswith('R') ]
+flor_cohort  = cohort_filter(df2).loc[ df2.index.get_level_values('código').str.startswith('F') ]
+
+# Note, the dtypes may be different between cohorts, as some don't have decimals and thus default to int.
+# This shouldn't affect functionality, but it should be corrected next. 
+
+[ f"Using of {cohort.shape[0]} samples" for cohort in [chile_cohort, rome_cohort, flor_cohort]]
 
 # %%
 # PARTE DE USAR ESTO PARA CONSTRUIR Y TESTEAR MODELOS DE MANU
