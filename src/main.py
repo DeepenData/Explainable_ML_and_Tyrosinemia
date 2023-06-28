@@ -119,7 +119,7 @@ def compare_dataframes(df1 : pd.DataFrame, df2 : pd.DataFrame) -> None:
 # Conexion a Google Sheets
 gc = gspread.service_account(
     # PARAM: service account for google sheets
-    filename='/home/manu/.config/google-cloud/credentials/project-30463-38031804e4b0.json'
+    filename='credentials/gcp.credentials.json'
 )
 
 # df1 --- Cohorte de Chile
@@ -606,9 +606,8 @@ if __name__ == "__main__":
         cohort[binary_target] = (cohort['alfa-fetoprotein'] > 5.2 ).astype('Int8')
         cohort.drop( columns = 'alfa-fetoprotein',  inplace=True )
 
-    import sys
-
-    assert len(sys.argv) > 3, "Not enough arguments provided"
+    # import sys
+    # assert len(sys.argv) > 3, "Not enough arguments provided"
 
     # Parses the arguments from the command line
     #fmt: off
