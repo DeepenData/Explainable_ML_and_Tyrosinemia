@@ -1,0 +1,7 @@
+tmp/
+**/*.png
+**/*.svg
+**/*.pdf
+**/*.jpeg
+
+*.log
