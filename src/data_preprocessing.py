@@ -15,7 +15,7 @@ def sheet_to_dataframe(
 
     # Get the list of all worksheets in the spreadsheet
     worksheets = spreadsheet.worksheets()  # saca todas las worksheets
-    logging.info(f"Reading from Google Sheets data\n\tFILE {spreadsheet}\n\tSHEETS {worksheets}")
+    logging.debug(f"Reading from Google Sheets data\n\tFILE {spreadsheet}\n\tSHEETS {worksheets}")
 
     # Create a list to hold all dataframes
     df_list : list[pd.DataFrame] = []
@@ -71,38 +71,38 @@ def compare_dataframes(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
     # Read CSV files into pandas DataFrames
     # Compare number of columns
     if len(df1.columns) != len(df2.columns):
-        print(
+        logging.debug(
             f"Number of columns are different. CSV1 has {len(df1.columns)} columns and CSV2 has {len(df2.columns)} columns."
         )
     else:
-        print(f"Both CSV files have the same number of columns: {len(df1.columns)}")
+        logging.debug(f"Both CSV files have the same number of columns: {len(df1.columns)}")
 
     # Compare column names
     if set(df1.columns) != set(df2.columns):
-        print("Column names are different:")
-        print("Columns in first CSV but not in second: ", set(df1.columns) - set(df2.columns))
-        print("Columns in second CSV but not in first: ", set(df2.columns) - set(df1.columns))
+        logging.debug("Column names are different:")
+        logging.debug("Columns in first CSV but not in second: ", set(df1.columns) - set(df2.columns))
+        logging.debug("Columns in second CSV but not in first: ", set(df2.columns) - set(df1.columns))
     else:
-        print("Column names are the same.")
+        logging.debug("Column names are the same.")
 
     # Compare column order
     if df1.columns.tolist() != df2.columns.tolist():
-        print("Column order is different.")
-        print("First CSV columns: ", df1.columns.tolist())
-        print("Second CSV columns: ", df2.columns.tolist())
+        logging.debug("Column order is different.")
+        logging.debug("First CSV columns: ", df1.columns.tolist())
+        logging.debug("Second CSV columns: ", df2.columns.tolist())
     else:
-        print("Column order is the same.")
+        logging.debug("Column order is the same.")
 
     # Compare column data types
     dtype_diff = False
     for column in df1.columns.intersection(df2.columns):
         if df1[column].dtype != df2[column].dtype:
             dtype_diff = True
-            print(f"Column '{column}' has different data types:")
-            print(f"Data type in first CSV: {df1[column].dtype}")
-            print(f"Data type in second CSV: {df2[column].dtype}")
+            logging.debug(f"Column '{column}' has different data types:")
+            logging.debug(f"Data type in first CSV: {df1[column].dtype}")
+            logging.debug(f"Data type in second CSV: {df2[column].dtype}")
     if not dtype_diff:
-        print("All common columns have the same data types.")
+        logging.debug("All common columns have the same data types.")
 
 
 # Common filtering of the cohorts, so they pass the same names
