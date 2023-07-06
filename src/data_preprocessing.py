@@ -1,9 +1,10 @@
 import logging
+from functools import cache
 
 import gspread
 import pandas as pd
 
-
+@cache
 def sheet_to_dataframe(
     key : str,          # The Google Sheet name key
     gc : gspread.Client # The client for Google Sheets # TODO: default client in environment?
