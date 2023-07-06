@@ -5,8 +5,6 @@ from model_classes import ModelInstance
 
 import pandas as pd
 
-from main import CPUS_PER_JOB
-
 def objective(
     trial,
     data: pd.DataFrame,
@@ -65,13 +63,13 @@ def objective(
     )
 
 
-@ray.remote(num_cpus=CPUS_PER_JOB, max_retries=5)
+@ray.remote(max_retries=5)
 def make_a_study(
     study_name: str,
     data: pd.DataFrame,
     target: str,
     shap_feature: str,  #
-    n_jobs=CPUS_PER_JOB,  # Por defecto todos los cores
+    n_jobs=-1,  # Por defecto todos los cores
     n_trials: int = 50,
     Independent_testset: bool = False,
     Independent_testset_df: pd.DataFrame = None,

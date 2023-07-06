@@ -1,0 +1,33 @@
+gspread_creds_file: "credentials/gcp.credentials.json"
+gsheets_keys:
+  - df_name: chile_cohort
+    key: 1aHCPVXG9Lv9Eg_V7bGd9Zj9jGbXcS8m0lDp9s8HDF-c
+    drop: ["nut status"]
+  - df_name: italy_cohort
+    key: 1vpFD-SLCcub_QuUFohRyt9W7LI7vAWiGTQRSJxVnAro
+    drop: ["data record (not for analysis)"]
+
+features:
+  - "age at diagnosis (months)"
+  - "ntbc dosis mg/kg/day"
+  - "ntbc levels (dbs)"
+  - "suac"
+  - "methionine (plasma)"
+  - "tyrosine (plasma)"
+  - "phenylalanine (plasma)"
+  - "pt (sec)"
+  - "bili total"
+  - "gpt"
+  - "got"
+  - "ggt"
+  - "alkaline phosphatase"
+  - "alfa-fetoprotein"
+  - "glicemia"
+
+required_features:
+  - "suac"
+  - "alfa-fetoprotein"
+
+binary_target: "Alpha-Fet"
+trials_run: 10
+cpus_per_job: 5
