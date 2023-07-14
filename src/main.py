@@ -9,6 +9,7 @@ import ray
 import yaml
 from sklearn.experimental import enable_iterative_imputer  # Requiered
 
+warnings.filterwarnings("ignore")
 from data_preprocessing import cohort_filter, sheet_to_dataframe
 from model_optimization import launch_to_ray
 
@@ -22,7 +23,6 @@ if __name__ == "__main__":
     )
 
     logging.info("Starting workflow")
-    warnings.filterwarnings("ignore")
 
     with open("parameters.yml", "r") as f:
         params = yaml.safe_load(f)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     # Defines the binary target
     for cohort in [chile_cohort, italy_cohort, rome_cohort, flor_cohort]:
-        cohort[binary_target] = (cohort['alfa-fetoprotein'] > 5.2).astype('Int8')
+        cohort[binary_target] = (cohort['alfa-fetoprotein'] > 5.2).astype('int')
         cohort.drop(columns='alfa-fetoprotein', inplace=True)
 
     ray.init(ignore_reinit_error=True)

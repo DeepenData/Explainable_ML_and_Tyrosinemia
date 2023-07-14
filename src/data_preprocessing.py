@@ -59,9 +59,10 @@ def sheet_to_dataframe(
     )
 
     final_df = (pd.concat(df_list, axis='index')
-        .set_index(['tiempo','código'])
-        .apply(pd.to_numeric, errors = 'ignore')
+        .set_index(['tiempo','código','pacientes'])
+        .apply(pd.to_numeric, axis='index', errors = 'coerce')
         .convert_dtypes()
+        .astype(dtype='float64', errors='ignore') # BUG: THis is to coherce to 'float64' as Numpy doesn't support pd.NaT
     )
 
     return final_df
