@@ -69,8 +69,8 @@ if __name__ == "__main__":
 
     RUNS = {
         "chile_cohort": (chile_cohort, None),
-        # "italy_cohort": (chile_cohort, italy_cohort),
-        # "rome_cohort": (chile_cohort, rome_cohort),
+        "italy_cohort": (chile_cohort, italy_cohort),
+        "rome_cohort": (chile_cohort, rome_cohort),
         "flor_cohort": (chile_cohort, flor_cohort),
     }
 
@@ -84,3 +84,16 @@ if __name__ == "__main__":
             n_trials=trials_run,
             binary_target=binary_target
         )
+
+    # Make figures. Run this interactively in a notebook 
+    from figures import get_studies, filter_studies, plot_studies
+
+    chile = filter_studies( studies = get_studies(f"results/chile_cohort_{K_num(trials_run)}"))
+    italy = filter_studies( studies = get_studies(f"results/italy_cohort_{K_num(trials_run)}")) 
+    rome  = filter_studies( studies = get_studies(f"results/rome_cohort_{K_num(trials_run)}") )
+    flor  = filter_studies( studies = get_studies(f"results/flor_cohort_{K_num(trials_run)}") )
+
+    plot_studies(chile, color = "Crimson",     main_title= "Chile")
+    plot_studies(rome,  color = "Goldenrod",   main_title= "Trained/Validated with Chile - Tested with Rome")
+    plot_studies(flor,  color = "DarkOrange",  main_title= "Florence")
+    plot_studies(italy, color = "ForestGreen", main_title= "Italy")
