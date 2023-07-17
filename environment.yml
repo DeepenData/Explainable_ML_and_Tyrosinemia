@@ -1,0 +1,20 @@
+name: UCH-tirosinemia
+channels:
+  - conda-forge
+
+dependencies:
+  # Lectura de parametros y data
+  - gspread
+  - yaml
+  # Computacion numerica
+  - numpy
+  - optuna
+  - pandas
+  - ray-core
+  # ML
+  - scikit-learn
+  - xgboost
+  - shap
+  # Graficos
+  - plotly
+  - seaborn
