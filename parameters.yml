@@ -9,7 +9,6 @@ gsheets_keys:
 
 features:
   - "age at diagnosis (months)"
-  - "ntbc dosis mg/kg/day"
   - "ntbc levels (dbs)"
   - "suac"
   - "methionine (plasma)"
@@ -21,7 +20,7 @@ features:
   - "got"
   - "ggt"
   - "alkaline phosphatase"
-  - "alfa-fetoprotein"
+  - "alfa-fetoprotein" # FIXME: This is required as it is the target
   - "glicemia"
 
 required_features:
